@@ -223,7 +223,7 @@ describe("Markdown Components", () => {
         '[data-streamdown="code-block"]'
       );
       expect(codeBlock).toBeTruthy();
-      expect(codeBlock?.getAttribute("data-language")).toBe("");
+      expect(codeBlock?.getAttribute("data-language")).toBe("code");
 
       // Should contain copy button
       const copyButton = container.querySelector("button");
