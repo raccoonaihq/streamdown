@@ -7,15 +7,25 @@
   "types": "index.d.ts",
   "exports": {
     ".": {
-      "types": "index.d.ts",
-      "import": "index.js",
-      "require": "index.cjs"
-    }
+      "types": "./index.d.ts",
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      },
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "index.js",
+    "index.cjs",
     "index.d.ts",
     "index.d.cts",
+    "index.css",
     "README.md"
   ],
   "homepage": "https://streamdown.ai",
