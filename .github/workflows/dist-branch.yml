@@ -50,6 +50,14 @@ jobs:
             echo "Error: index.js not found in dist"
             exit 1
           fi
+          if [ ! -f "packages/streamdown/dist/index.d.ts" ]; then
+            echo "Error: index.d.ts not found in dist"
+            exit 1
+          fi
+          if [ ! -f "packages/streamdown/dist/index.d.cts" ]; then
+            echo "Error: index.d.cts not found in dist"
+            exit 1
+          fi
 
       - name: Configure Git
         run: |
@@ -94,6 +102,17 @@ jobs:
           # Copy prepared files
           cp -r "$TEMP_DIR/"* .
           cp "$TEMP_DIR/.gitignore" .
+
+          # Verify type files are present
+          if [ ! -f "index.d.ts" ]; then
+            echo "Error: index.d.ts not found in dist branch"
+            exit 1
+          fi
+          if [ ! -f "index.d.cts" ]; then
+            echo "Error: index.d.cts not found in dist branch"
+            exit 1
+          fi
+          echo "✓ Type definitions verified in dist branch"
 
           # Add and commit
           git add -A
