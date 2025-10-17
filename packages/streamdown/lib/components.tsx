@@ -586,7 +586,7 @@ const CodeComponent = ({
   }
 
   const match = className?.match(LANGUAGE_REGEX);
-  const language = (match?.at(1) ?? "code") as BundledLanguage;
+  const language = (match?.at(1) ?? "") as BundledLanguage;
 
   // Extract code content from children safely
   let code = "";

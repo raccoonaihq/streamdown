@@ -1,9 +1,27 @@
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
+import { act } from "react";
 import React from "react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { components } from "../lib/components";
 
+// Mock mermaid for tests
+const mockInitialize = vi.fn();
+const mockRender = vi.fn().mockResolvedValue({ svg: "<svg>Test SVG</svg>" });
+
+vi.mock("mermaid", () => ({
+  default: {
+    initialize: mockInitialize,
+    render: mockRender,
+  },
+}));
+
 describe("Markdown Components", () => {
+  beforeEach(() => {
+    // Clear mock calls before each test
+    mockInitialize.mockClear();
+    mockRender.mockClear();
+  });
+
   describe("List Components", () => {
     it("should render ordered list with correct classes", () => {
       const OL = components.ol!;
@@ -260,31 +278,38 @@ describe("Markdown Components", () => {
       expect(container.textContent).toBe("plain text code");
     });
     it("should render mermaid block with Mermaid and copy button", async () => {
-      const { waitFor } = await import("@testing-library/react");
       const Code = components.code!;
-      const { container } = render(
-        <Code
-          className="language-mermaid"
-          node={
-            {
-              position: {
-                start: { line: 1, column: 1 },
-                end: { line: 2, column: 10 },
-              },
-            } as any
-          }
-        >
-          {"graph TD; A-->B;"}
-        </Code>
-      );
-      const mermaidBlock = container.querySelector(
+      let container: HTMLElement;
+      
+      await act(async () => {
+        const result = render(
+          <Code
+            className="language-mermaid"
+            node={
+              {
+                position: {
+                  start: { line: 1, column: 1 },
+                  end: { line: 2, column: 10 },
+                },
+              } as any
+            }
+          >
+            {"graph TD; A-->B;"}
+          </Code>
+        );
+        container = result.container;
+      });
+      
+      const mermaidBlock = container!.querySelector(
         '[data-streamdown="mermaid-block"]'
       );
       expect(mermaidBlock).toBeTruthy();
+      
       // Wait for Mermaid chart to finish loading
       await waitFor(() => {
         expect(mermaidBlock?.textContent).not.toContain("Loading diagram...");
       });
+      
       // Copy button should be present
       const copyButton = mermaidBlock?.querySelector("button");
       expect(copyButton).toBeTruthy();
