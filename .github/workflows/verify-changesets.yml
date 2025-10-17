@@ -5,12 +5,13 @@
 name: Verify Changesets
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
-    branches:
-      - main
-    paths:
-      - '.changeset/*.md'
+  workflow_dispatch:
+  # pull_request:
+  #   types: [opened, synchronize, reopened, labeled, unlabeled]
+  #   branches:
+  #     - main
+  #   paths:
+  #     - '.changeset/*.md'
 
 permissions:
   contents: read
