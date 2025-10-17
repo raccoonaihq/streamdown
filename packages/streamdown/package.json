@@ -19,11 +19,12 @@
   "homepage": "https://streamdown.ai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vercel/streamdown.git",
+    "url": "git+https://github.com/raccoonaihq/streamdown.git",
     "directory": "packages/streamdown"
   },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "pnpm build",
     "test": "vitest run",
     "test:ui": "vitest --ui run",
     "test:coverage": "vitest --coverage run"

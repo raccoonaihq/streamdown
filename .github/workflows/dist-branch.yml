@@ -1,0 +1,111 @@
+name: Update Distribution Branch
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-push:
+    name: Build and Push to dist Branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm i --frozen-lockfile
+
+      - name: Run Tests
+        run: pnpm --filter streamdown test
+
+      - name: Build Package
+        run: pnpm --filter streamdown build
+
+      - name: Verify Build Output
+        run: |
+          if [ ! -d "packages/streamdown/dist" ]; then
+            echo "Error: dist directory not found after build"
+            exit 1
+          fi
+          if [ ! -f "packages/streamdown/dist/index.js" ]; then
+            echo "Error: index.js not found in dist"
+            exit 1
+          fi
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Create/Update dist Branch
+        run: |
+          # Store current commit SHA for reference
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          # Create a clean temporary directory for the dist branch
+          TEMP_DIR=$(mktemp -d)
+
+          # Copy the built files (flatten the dist directory to root)
+          cp -r packages/streamdown/dist/* "$TEMP_DIR/"
+
+          # Copy package metadata
+          cp packages/streamdown/README.md "$TEMP_DIR/"
+          cp LICENSE "$TEMP_DIR/"
+
+          # Create modified package.json with corrected paths for dist branch
+          cat packages/streamdown/package.json | \
+            sed 's|"./dist/|"./|g' | \
+            sed 's|"dist",||g' > "$TEMP_DIR/package.json"
+
+          # Create a minimal .gitignore for the dist branch
+          cat > "$TEMP_DIR/.gitignore" << 'EOF'
+          # Only ignore common system files in dist branch
+          .DS_Store
+          Thumbs.db
+          EOF
+
+          # Switch to dist branch (create if doesn't exist)
+          git checkout --orphan dist-temp
+
+          # Remove all files from the working directory
+          git rm -rf . 2>/dev/null || true
+          rm -rf ./*
+
+          # Copy prepared files
+          cp -r "$TEMP_DIR/"* .
+          cp "$TEMP_DIR/.gitignore" .
+
+          # Add and commit
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Build from ${COMMIT_SHA:0:7}: ${COMMIT_MSG}"
+            
+            # Force push to dist branch
+            git push origin dist-temp:dist --force
+          fi
+
+          # Cleanup
+          rm -rf "$TEMP_DIR"
