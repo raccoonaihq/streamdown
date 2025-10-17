@@ -14,6 +14,7 @@ import {
   CodeBlock,
   CodeBlockCopyButton,
   CodeBlockDownloadButton,
+  MermaidFullscreenButton,
 } from "./code-block";
 import { ImageComponent } from "./image";
 import { Mermaid } from "./mermaid";
@@ -603,6 +604,7 @@ const CodeComponent = ({
 
   if (language === "mermaid") {
     const showMermaidControls = shouldShowControls(controlsConfig, "mermaid");
+    const mermaidContent = <Mermaid chart={code} config={mermaidConfig} />;
 
     return (
       <div
@@ -614,11 +616,12 @@ const CodeComponent = ({
       >
         {showMermaidControls && (
           <div className="flex items-center justify-end gap-2">
+            <MermaidFullscreenButton content={mermaidContent} />
             <CodeBlockDownloadButton code={code} language={language} />
             <CodeBlockCopyButton code={code} />
           </div>
         )}
-        <Mermaid chart={code} config={mermaidConfig} />
+        {mermaidContent}
       </div>
     );
   }

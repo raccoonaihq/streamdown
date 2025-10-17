@@ -24,6 +24,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "build:watch": "tsup --watch",
     "prepublishOnly": "pnpm build",
     "test": "vitest run",
     "test:ui": "vitest --ui run",
