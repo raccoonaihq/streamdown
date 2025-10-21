@@ -138,10 +138,13 @@ jobs:
           # Get the latest commit SHA from dist branch
           DIST_SHA=$(git rev-parse dist)
 
+          # Delete the tag locally if it exists
+          git tag -d $VERSION 2>/dev/null || true
+
           # Create tag on dist branch
           git tag $VERSION $DIST_SHA
 
-          # Push the tag
-          git push origin $VERSION
+          # Force push the tag (overwrites existing tag)
+          git push origin $VERSION --force
 
-          echo "✓ Created tag $VERSION on dist branch"
+          echo "✓ Created/updated tag $VERSION on dist branch"
