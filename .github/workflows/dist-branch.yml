@@ -1,11 +1,8 @@
-name: Update Distribution Branch
+name: Deploy on Release
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -64,21 +61,18 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Determine if Tag Push
-        id: check-tag
+      - name: Get Release Version
+        id: version
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo "is_tag=true" >> $GITHUB_OUTPUT
-            echo "tag_name=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          else
-            echo "is_tag=false" >> $GITHUB_OUTPUT
-          fi
+          # Get the tag name from the release
+          VERSION="${{ github.event.release.tag_name }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "✓ Release version: $VERSION"
 
       - name: Create/Update dist Branch
         run: |
-          # Store current commit SHA for reference
+          VERSION="${{ steps.version.outputs.version }}"
           COMMIT_SHA="${{ github.sha }}"
-          COMMIT_MSG=$(git log -1 --pretty=%B)
 
           # Create a clean temporary directory for the dist branch
           TEMP_DIR=$(mktemp -d)
@@ -126,26 +120,18 @@ jobs:
 
           # Add and commit
           git add -A
+          git commit -m "Release $VERSION from ${COMMIT_SHA:0:7}"
 
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            if [ "${{ steps.check-tag.outputs.is_tag }}" == "true" ]; then
-              git commit -m "Release ${{ steps.check-tag.outputs.tag_name }} from ${COMMIT_SHA:0:7}"
-            else
-              git commit -m "Build from ${COMMIT_SHA:0:7}: ${COMMIT_MSG}"
-            fi
-            
-            # Force push to dist branch
-            git push origin dist-temp:dist --force
-          fi
+          # Force push to dist branch
+          git push origin dist-temp:dist --force
 
           # Cleanup
           rm -rf "$TEMP_DIR"
 
       - name: Create Version Tag on dist Branch
-        if: steps.check-tag.outputs.is_tag == 'true'
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
           # Fetch the dist branch
           git fetch origin dist:dist
 
@@ -153,9 +139,9 @@ jobs:
           DIST_SHA=$(git rev-parse dist)
 
           # Create tag on dist branch
-          git tag ${{ steps.check-tag.outputs.tag_name }} $DIST_SHA
+          git tag $VERSION $DIST_SHA
 
           # Push the tag
-          git push origin ${{ steps.check-tag.outputs.tag_name }}
+          git push origin $VERSION
 
-          echo "✓ Created tag ${{ steps.check-tag.outputs.tag_name }} on dist branch"
+          echo "✓ Created tag $VERSION on dist branch"
