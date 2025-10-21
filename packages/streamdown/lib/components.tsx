@@ -1,4 +1,5 @@
 import {
+  type ComponentProps,
   type DetailedHTMLProps,
   type HTMLAttributes,
   type ImgHTMLAttributes,
@@ -6,6 +7,7 @@ import {
   type JSX,
   memo,
   useContext,
+  useState,
 } from "react";
 import type { ExtraProps, Options } from "react-markdown";
 import type { BundledLanguage } from "shiki";
@@ -14,10 +16,14 @@ import {
   CodeBlock,
   CodeBlockCopyButton,
   CodeBlockDownloadButton,
-  MermaidFullscreenButton,
 } from "./code-block";
 import { ImageComponent } from "./image";
 import { Mermaid } from "./mermaid";
+import {
+  MermaidCopyButton,
+  MermaidDownloadButton,
+  MermaidFullscreenButton,
+} from "./mermaid-controls";
 import { TableCopyButton, TableDownloadDropdown } from "./table";
 import { cn } from "./utils";
 
@@ -604,7 +610,11 @@ const CodeComponent = ({
 
   if (language === "mermaid") {
     const showMermaidControls = shouldShowControls(controlsConfig, "mermaid");
-    const mermaidContent = <Mermaid chart={code} config={mermaidConfig} />;
+    // Create a stable render id per code block instance, so controls can target the right SVG
+    const [renderId] = useState(() => `streamdown-mermaid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
+    const mermaidContent = (
+      <Mermaid chart={code} config={mermaidConfig} renderId={renderId} />
+    );
 
     return (
       <div
@@ -616,9 +626,9 @@ const CodeComponent = ({
       >
         {showMermaidControls && (
           <div className="flex items-center justify-end gap-2">
-            <MermaidFullscreenButton content={mermaidContent} />
-            <CodeBlockDownloadButton code={code} language={language} />
-            <CodeBlockCopyButton code={code} />
+            <MermaidFullscreenButton chart={code} config={mermaidConfig} />
+            <MermaidDownloadButton chart={code} renderId={renderId} />
+            <MermaidCopyButton chart={code} renderId={renderId} />
           </div>
         )}
         {mermaidContent}

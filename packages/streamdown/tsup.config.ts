@@ -8,4 +8,5 @@ export default defineConfig({
   outDir: "dist",
   sourcemap: false,
   external: ["react", "react-dom"],
+  noExternal: ["@panzoom/panzoom"],
 });
