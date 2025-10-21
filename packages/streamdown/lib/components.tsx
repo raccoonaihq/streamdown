@@ -34,6 +34,7 @@ type MarkdownPosition = { start?: MarkdownPoint; end?: MarkdownPoint };
 type MarkdownNode = {
   position?: MarkdownPosition;
   properties?: { className?: string };
+  tagName?: string;
 };
 
 type WithNode<T> = T & {
@@ -451,9 +452,9 @@ const MemoSection = memo<SectionProps>(
       const isEmptyFootnote = (listItem: React.ReactNode): boolean => {
         if (!isValidElement(listItem)) return false;
 
-        const itemChildren = Array.isArray(listItem.props.children)
-          ? listItem.props.children
-          : [listItem.props.children];
+        const itemChildren = Array.isArray((listItem.props as any).children)
+          ? (listItem.props as any).children
+          : [(listItem.props as any).children];
 
         // Check if all children are either whitespace or backref links
         let hasContent = false;
@@ -469,14 +470,14 @@ const MemoSection = memo<SectionProps>(
             }
           } else if (isValidElement(itemChild)) {
             // Check if it's a backref link
-            if (itemChild.props?.["data-footnote-backref"] !== undefined) {
+            if ((itemChild.props as any)?.["data-footnote-backref"] !== undefined) {
               hasBackref = true;
             } else {
               // It's some other element (like <p>), which means it has content
               // But we need to check if the <p> has actual content
-              const grandChildren = Array.isArray(itemChild.props.children)
-                ? itemChild.props.children
-                : [itemChild.props.children];
+              const grandChildren = Array.isArray((itemChild.props as any).children)
+                ? (itemChild.props as any).children
+                : [(itemChild.props as any).children];
 
               for (const grandChild of grandChildren) {
                 if (
@@ -489,7 +490,7 @@ const MemoSection = memo<SectionProps>(
                 if (isValidElement(grandChild)) {
                   // If it's not a backref link, it's content
                   if (
-                    grandChild.props?.["data-footnote-backref"] === undefined
+                    (grandChild.props as any)?.["data-footnote-backref"] === undefined
                   ) {
                     hasContent = true;
                     break;
@@ -511,9 +512,9 @@ const MemoSection = memo<SectionProps>(
 
             // If this is an <ol> containing footnote list items
             if (child.type === MemoOl) {
-              const listChildren = Array.isArray(child.props.children)
-                ? child.props.children
-                : [child.props.children];
+              const listChildren = Array.isArray((child.props as any).children)
+                ? (child.props as any).children
+                : [(child.props as any).children];
 
               const filteredListChildren = listChildren.filter(
                 (listItem: React.ReactNode) => !isEmptyFootnote(listItem)
@@ -528,7 +529,7 @@ const MemoSection = memo<SectionProps>(
               return {
                 ...child,
                 props: {
-                  ...child.props,
+                  ...(child.props as any),
                   children: filteredListChildren,
                 },
               };
