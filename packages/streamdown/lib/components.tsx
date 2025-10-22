@@ -6,8 +6,9 @@ import {
   isValidElement,
   type JSX,
   memo,
+  type ReactNode,
+  useId,
   useContext,
-  useState,
 } from "react";
 import type { ExtraProps, Options } from "react-markdown";
 import type { BundledLanguage } from "shiki";
@@ -566,6 +567,33 @@ const MemoSection = memo<SectionProps>(
 );
 MemoSection.displayName = "MarkdownSection";
 
+// Helper function to extract code content from children
+const extractCode = (
+  children: ReactNode
+): string => {
+  if (
+    isValidElement(children) &&
+    children.props &&
+    typeof children.props === "object" &&
+    "children" in children.props &&
+    typeof children.props.children === "string"
+  ) {
+    return children.props.children;
+  }
+  if (typeof children === "string") {
+    return children;
+  }
+  return "";
+};
+
+// Create a stable key for mermaid that updates less frequently during streaming
+// Updates every ~50 characters to reduce remounts while ensuring fresh state for complete code
+const getMermaidKey = (baseId: string, code: string): string => {
+  const chunkSize = 50;
+  const chunk = Math.floor(code.length / chunkSize);
+  return `${baseId}-${chunk}`;
+};
+
 const CodeComponent = ({
   node,
   className,
@@ -577,8 +605,15 @@ const CodeComponent = ({
   const mermaidConfig = useContext(MermaidConfigContext);
   const controlsConfig = useContext(ControlsContext);
 
+  const match = className?.match(LANGUAGE_REGEX);
+  const language = (match?.at(1) ?? "code") as BundledLanguage;
+  const code = extractCode(children);
+  const id = useId();
+  const renderId = `streamdown-mermaid-${id}`;
+  const mermaidKey = language === "mermaid" ? getMermaidKey(renderId, code) : renderId;
+
   if (inline) {
-    return (
+    return ( 
       <code
         className={cn(
           "rounded bg-muted px-1.5 py-0.5 font-mono text-sm",
@@ -592,31 +627,16 @@ const CodeComponent = ({
     );
   }
 
-  const match = className?.match(LANGUAGE_REGEX);
-  const language = (match?.at(1) ?? "code") as BundledLanguage;
-
-  // Extract code content from children safely
-  let code = "";
-  if (
-    isValidElement(children) &&
-    children.props &&
-    typeof children.props === "object" &&
-    "children" in children.props &&
-    typeof children.props.children === "string"
-  ) {
-    code = children.props.children;
-  } else if (typeof children === "string") {
-    code = children;
-  }
-
   if (language === "mermaid") {
-    const showMermaidControls = shouldShowControls(controlsConfig, "mermaid");
-    // Create a stable render id per code block instance, so controls can target the right SVG
-    const [renderId] = useState(() => `streamdown-mermaid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
     const mermaidContent = (
-      <Mermaid chart={code} config={mermaidConfig} renderId={renderId} />
+      <Mermaid
+        chart={code}
+        config={mermaidConfig}
+        key={mermaidKey}
+        renderId={renderId}
+      />
     );
-
+    const showMermaidControls = shouldShowControls(controlsConfig, "mermaid");
     return (
       <div
         className={cn(
@@ -662,7 +682,10 @@ const MemoCode = memo<
   DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement> & ExtraProps
 >(
   CodeComponent,
-  (p, n) => p.className === n.className && sameNodePosition(p.node, n.node)
+  (p, n) =>
+    p.className === n.className &&
+    sameNodePosition(p.node, n.node) &&
+    extractCode(p.children) === extractCode(n.children)
 );
 MemoCode.displayName = "MarkdownCode";
 

@@ -314,6 +314,16 @@ export const Mermaid = forwardRef<MermaidControls, MermaidProps>(
       };
     }, [chart, config]);
 
+    const containerStyle = useMemo(() => {
+      if (enablePanZoom) {
+        return { height: "100%", maxHeight: "100%" } as const;
+      }
+
+      return {
+        maxHeight: INLINE_MAX_HEIGHT,
+      } as const;
+    }, [enablePanZoom]);
+
     const hasContent = hasRendered || Boolean(lastValidSvgRef.current);
 
     if (!hasContent && error) {
@@ -334,16 +344,6 @@ export const Mermaid = forwardRef<MermaidControls, MermaidProps>(
         </div>
       );
     }
-
-    const containerStyle = useMemo(() => {
-      if (enablePanZoom) {
-        return { height: "100%", maxHeight: "100%" } as const;
-      }
-
-      return {
-        maxHeight: INLINE_MAX_HEIGHT,
-      } as const;
-    }, [enablePanZoom]);
 
     return (
       <div
