@@ -1,0 +1,3 @@
+# Only ignore common system files in dist branch
+.DS_Store
+Thumbs.db
