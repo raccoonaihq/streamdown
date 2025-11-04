@@ -666,7 +666,7 @@ const CodeComponent = ({
       data-language={language}
       data-streamdown="code-block"
       language={language}
-      preClassName="overflow-x-auto font-mono text-xs p-4 bg-muted/40"
+      preClassName="overflow-x-auto font-mono text-xs p-4 bg-muted/40 break-words whitespace-pre-wrap md:whitespace-normal"
     >
       {showCodeControls && (
         <>
