@@ -613,10 +613,10 @@ const CodeComponent = ({
   const mermaidKey = language === "mermaid" ? getMermaidKey(renderId, code) : renderId;
 
   if (inline) {
-    return ( 
+    return (
       <code
         className={cn(
-          "rounded bg-muted px-1.5 py-0.5 font-mono text-sm",
+          "rounded bg-muted px-1 py-0.5 sm:px-1.5 font-mono text-xs sm:text-sm whitespace-normal wrap-anywhere",
           className
         )}
         data-streamdown="inline-code"
