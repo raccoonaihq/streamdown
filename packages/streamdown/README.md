@@ -4,6 +4,32 @@ A drop-in replacement for react-markdown, designed for AI-powered streaming.
 
 [![npm version](https://img.shields.io/npm/v/streamdown)](https://www.npmjs.com/package/streamdown)
 
+## Local Usage
+
+Core code of streamdown lies in `packages/streamdown`, so we need to build in this folder and use that as local streamdown package.
+
+Run the following command to continuously build the package while making changes.
+
+```bash
+pnpm install
+
+cd packages/streamdown && pnpm build:watch
+```
+
+This will build the package and output the distribution files in `packages/streamdown/dist` folder. Use this folder in your `package.json` to link streamdown locally.
+
+Example usage while building locally -
+
+```json
+{
+  "dependencies": {
+    ...
+    "streamdown": "file:../../streamdown/packages/streamdown/dist",
+    ...
+  }
+}
+```
+
 ## Overview
 
 Formatting Markdown is easy, but when you tokenize and stream it, new challenges arise. Streamdown is built specifically to handle the unique requirements of streaming Markdown content from AI models, providing seamless formatting even with incomplete or unterminated Markdown blocks.
@@ -41,7 +67,7 @@ Make sure the path matches the location of the `node_modules` folder in your pro
 ### Basic Example
 
 ```tsx
-import { Streamdown } from 'streamdown';
+import { Streamdown } from "streamdown";
 
 export default function Page() {
   const markdown = "# Hello World\n\nThis is **streaming** markdown!";
@@ -55,8 +81,8 @@ export default function Page() {
 Streamdown supports Mermaid diagrams using the `mermaid` language identifier:
 
 ```tsx
-import { Streamdown } from 'streamdown';
-import type { MermaidConfig } from 'mermaid';
+import { Streamdown } from "streamdown";
+import type { MermaidConfig } from "mermaid";
 
 export default function Page() {
   const markdown = `
@@ -87,60 +113,60 @@ sequenceDiagram
 
   // Optional: Customize Mermaid theme and colors
   const mermaidConfig: MermaidConfig = {
-    theme: 'dark',
+    theme: "dark",
     themeVariables: {
-      primaryColor: '#ff0000',
-      primaryTextColor: '#fff'
-    }
+      primaryColor: "#ff0000",
+      primaryTextColor: "#fff",
+    },
   };
 
-  return (
-    <Streamdown mermaidConfig={mermaidConfig}>
-      {markdown}
-    </Streamdown>
-  );
+  return <Streamdown mermaidConfig={mermaidConfig}>{markdown}</Streamdown>;
 }
 ```
 
 ### With AI SDK
 
 ```tsx
-'use client';
+"use client";
 
-import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
-import { Streamdown } from 'streamdown';
+import { useChat } from "@ai-sdk/react";
+import { useState } from "react";
+import { Streamdown } from "streamdown";
 
 export default function Page() {
   const { messages, sendMessage, status } = useChat();
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
 
   return (
     <>
-      {messages.map(message => (
+      {messages.map((message) => (
         <div key={message.id}>
-          {message.parts.filter(part => part.type === 'text').map((part, index) => (
-            <Streamdown isAnimating={status === 'streaming'} key={index}>{part.text}</Streamdown>
-          ))}
+          {message.parts
+            .filter((part) => part.type === "text")
+            .map((part, index) => (
+              <Streamdown isAnimating={status === "streaming"} key={index}>
+                {part.text}
+              </Streamdown>
+            ))}
         </div>
       ))}
 
       <form
-        onSubmit={e => {
+        onSubmit={(e) => {
           e.preventDefault();
           if (input.trim()) {
             sendMessage({ text: input });
-            setInput('');
+            setInput("");
           }
         }}
       >
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
-          disabled={status !== 'ready'}
+          onChange={(e) => setInput(e.target.value)}
+          disabled={status !== "ready"}
           placeholder="Say something..."
         />
-        <button type="submit" disabled={status !== 'ready'}>
+        <button type="submit" disabled={status !== "ready"}>
           Submit
         </button>
       </form>
@@ -154,8 +180,8 @@ export default function Page() {
 When you need to override the default plugins (e.g., to configure security settings), you can import the default plugin configurations and selectively modify them:
 
 ```tsx
-import { Streamdown, defaultRehypePlugins } from 'streamdown';
-import { harden } from 'rehype-harden';
+import { Streamdown, defaultRehypePlugins } from "streamdown";
+import { harden } from "rehype-harden";
 
 export default function Page() {
   const markdown = `
@@ -171,8 +197,8 @@ export default function Page() {
         [
           harden,
           {
-            defaultOrigin: 'https://example.com',
-            allowedLinkPrefixes: ['https://example.com'],
+            defaultOrigin: "https://example.com",
+            allowedLinkPrefixes: ["https://example.com"],
           },
         ],
       ]}
@@ -186,11 +212,13 @@ export default function Page() {
 The `defaultRehypePlugins` and `defaultRemarkPlugins` exports provide access to:
 
 **defaultRehypePlugins:**
+
 - `harden` - Security hardening with rehype-harden (configured with wildcard permissions by default)
 - `raw` - HTML support
 - `katex` - Math rendering with KaTeX
 
 **defaultRemarkPlugins:**
+
 - `gfm` - GitHub Flavored Markdown support
 - `math` - Math syntax support
 
@@ -198,18 +226,18 @@ The `defaultRehypePlugins` and `defaultRemarkPlugins` exports provide access to:
 
 Streamdown accepts all the same props as react-markdown, plus additional streaming-specific options:
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `children` | `string` | - | The Markdown content to render |
-| `parseIncompleteMarkdown` | `boolean` | `true` | Parse and style unterminated Markdown blocks |
-| `className` | `string` | - | CSS class for the container |
-| `components` | `object` | - | Custom component overrides |
-| `rehypePlugins` | `array` | `[[harden, { allowedImagePrefixes: ["*"], allowedLinkPrefixes: ["*"], defaultOrigin: undefined }], rehypeRaw, [rehypeKatex, { errorColor: "var(--color-muted-foreground)" }]]` | Rehype plugins to use. Includes rehype-harden for security, rehype-raw for HTML support, and rehype-katex for math rendering by default |
-| `remarkPlugins` | `array` | `[[remarkGfm, {}], [remarkMath, { singleDollarTextMath: false }]]` | Remark plugins to use. Includes GitHub Flavored Markdown and math support by default |
-| `shikiTheme` | `[BundledTheme, BundledTheme]` | `['github-light', 'github-dark']` | The light and dark themes to use for code blocks |
-| `mermaidConfig` | `MermaidConfig` | - | Custom configuration for Mermaid diagrams (theme, colors, etc.) |
-| `controls` | `boolean \| { table?: boolean, code?: boolean, mermaid?: boolean }` | `true` | Control visibility of copy/download buttons |
-| `isAnimating` | `boolean` | `false` | Whether the component is currently animating. This is used to disable the copy and download buttons when the component is animating. |
+| Prop                      | Type                                                                | Default                                                                                                                                                                        | Description                                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `children`                | `string`                                                            | -                                                                                                                                                                              | The Markdown content to render                                                                                                          |
+| `parseIncompleteMarkdown` | `boolean`                                                           | `true`                                                                                                                                                                         | Parse and style unterminated Markdown blocks                                                                                            |
+| `className`               | `string`                                                            | -                                                                                                                                                                              | CSS class for the container                                                                                                             |
+| `components`              | `object`                                                            | -                                                                                                                                                                              | Custom component overrides                                                                                                              |
+| `rehypePlugins`           | `array`                                                             | `[[harden, { allowedImagePrefixes: ["*"], allowedLinkPrefixes: ["*"], defaultOrigin: undefined }], rehypeRaw, [rehypeKatex, { errorColor: "var(--color-muted-foreground)" }]]` | Rehype plugins to use. Includes rehype-harden for security, rehype-raw for HTML support, and rehype-katex for math rendering by default |
+| `remarkPlugins`           | `array`                                                             | `[[remarkGfm, {}], [remarkMath, { singleDollarTextMath: false }]]`                                                                                                             | Remark plugins to use. Includes GitHub Flavored Markdown and math support by default                                                    |
+| `shikiTheme`              | `[BundledTheme, BundledTheme]`                                      | `['github-light', 'github-dark']`                                                                                                                                              | The light and dark themes to use for code blocks                                                                                        |
+| `mermaidConfig`           | `MermaidConfig`                                                     | -                                                                                                                                                                              | Custom configuration for Mermaid diagrams (theme, colors, etc.)                                                                         |
+| `controls`                | `boolean \| { table?: boolean, code?: boolean, mermaid?: boolean }` | `true`                                                                                                                                                                         | Control visibility of copy/download buttons                                                                                             |
+| `isAnimating`             | `boolean`                                                           | `false`                                                                                                                                                                        | Whether the component is currently animating. This is used to disable the copy and download buttons when the component is animating.    |
 
 ## Architecture
 
