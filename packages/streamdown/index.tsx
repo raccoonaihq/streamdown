@@ -4,6 +4,7 @@ import { createContext, memo, useId, useMemo } from "react";
 import ReactMarkdown, { type Options } from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
+import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import type { BundledTheme } from "shiki";
@@ -50,6 +51,7 @@ export const defaultRehypePlugins: Record<string, Pluggable> = {
 } as const;
 
 export const defaultRemarkPlugins: Record<string, Pluggable> = {
+  breaks: [remarkBreaks, {}],
   gfm: [remarkGfm, {}],
   math: [remarkMath, { singleDollarTextMath: false }],
 } as const;
